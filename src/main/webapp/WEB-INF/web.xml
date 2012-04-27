@@ -1,0 +1,18 @@
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" version="2.5">
+    <servlet>
+        <servlet-name>dispatcher</servlet-name>
+        <servlet-class>uk.co.bruntonspall.scalecamp.servlets.DispatcherServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>twitterOauth</servlet-name>
+        <servlet-class>uk.co.bruntonspall.scalecamp.servlets.TwitterOAuthServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>twitterOauth</servlet-name>
+        <url-pattern>/oauth/twitter/*</url-pattern>
+    </servlet-mapping>
+</web-app>
