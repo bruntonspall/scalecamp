@@ -1,0 +1,26 @@
+@(params: Map[String,String])
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Setup</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-2.0.0.min.css" />
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="span12">
+            <h1>Setup values</h1>
+            <form method="POST" action="/setup" class="form-horizontal">
+                @params.map { case(k,v) =>
+                <div class="control-group">
+                    <label class="control-label" for="@k">@k</label>
+                    <input type="text" class="input-xlarge" value="@v" name="@k" />
+                </div>
+                }
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
