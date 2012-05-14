@@ -1,32 +1,35 @@
 package uk.co.bruntonspall.scalecamp.model
 
-import javax.persistence.Id
-import com.googlecode.objectify.annotation.Unindexed
-import com.googlecode.objectify.{Key, ObjectifyService}
+import com.googlecode.objectify.ObjectifyService
 import org.scribe.model.Token
+import uk.co.bruntonspall.scalecamp.utils.Annotations._
+import uk.co.bruntonspall.scalecamp.utils.Ofy
+import com.googlecode.objectify.annotation.Entity
 
+@Entity
 case class User(
-                 @Id id: Long,
-                 twitter_id: String,
-                 twitter_name: String,
-                 @Unindexed twitter_access_token: Token,
-                 @Unindexed fullName: String)
+    @Id var id: String,
+    @Index var twitter_name: String,
+    @Serialize var twitter_access_token: Token,
+    @Serialize var user: TwitterUser) {
+  private def this() { this(null, null, null, null) }
+}
 
 object User {
   ObjectifyService.register(classOf[User])
 
-  def query = ObjectifyService.begin.query(classOf[User])
-  def key(id: Long) = new Key(classOf[User], id)
+  def getByTwitterHandle(handle: String) = Option(Ofy.load.kind(classOf[User]).filter("twitter_name", handle).first.get)
 
-  def getByTwitterHandle(handle: String) = Option(query.filter("twitter_name",handle).get)
-	def get(id: Long):User = ObjectifyService.begin.get(key(id))
-  def put(user: User):Key[User] = ObjectifyService.begin.put(user)
-  def getOrCreate(id: String, handle: String, token: Token, fullname: String) = {
-    getByTwitterHandle(id) match {
+  def get(id: String) = Ofy.load.kind(classOf[User]).id(id).get
+
+  def put(user: User) = Ofy.save.entity(user)
+
+  def getOrCreate(twitterUser: TwitterUser, token: Token) = {
+    getByTwitterHandle(twitterUser.name) match {
       case Some(user) => user
       case None => {
-        val user = new User(null.asInstanceOf[Long], id, handle, token, fullname)
-        val key:Key[User] = ObjectifyService.begin.put(user)
+        val user = new User(twitterUser.id_str, twitterUser.name, token, twitterUser)
+        put(user)
         user
       }
     }

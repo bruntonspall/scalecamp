@@ -1,6 +1,6 @@
 package uk.co.bruntonspall.scalecamp.scalatra
 
-import org.scalatra.{ScalatraKernel, ContentTypeInferrer}
+import org.scalatra.{ ScalatraKernel, ContentTypeInferrer }
 import twirl.api.Content
 
 trait TwirlSupport extends ScalatraKernel {

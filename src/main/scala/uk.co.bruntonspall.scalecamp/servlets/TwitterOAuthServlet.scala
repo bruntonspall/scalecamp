@@ -2,22 +2,19 @@ package uk.co.bruntonspall.scalecamp.servlets
 
 import uk.co.bruntonspall.scalecamp.scalatra.TwirlSupport
 import org.scalatra.ScalatraServlet
-import org.scribe.oauth.OAuthService
 import org.scribe.builder.ServiceBuilder
 import org.scribe.builder.api.TwitterApi
 import uk.co.bruntonspall.scalecamp.utils.Config
 import org.scribe.model._
-import net.liftweb.json.Extraction
-import net.liftweb.json
-import uk.co.bruntonspall.scalecamp.model.{TwitterUser, User}
+import uk.co.bruntonspall.scalecamp.model.{ TwitterUser, User }
+import io.Source
 
 class TwitterOAuthServlet extends ScalatraServlet with TwirlSupport {
-  implicit val formats = net.liftweb.json.DefaultFormats
-  val service = new ServiceBuilder()
+  lazy val service = new ServiceBuilder()
     .provider(classOf[TwitterApi.Authenticate])
-    .apiKey(Config.twitter_consumer_key)
-    .apiSecret(Config.twitter_consumer_secret)
-    .callback(Config.twitter_callback)
+    .apiKey(Config.get(Config.twitter_consumer_key))
+    .apiSecret(Config.get(Config.twitter_consumer_secret))
+    .callback(Config.get(Config.twitter_callback))
     .build
 
   get("/login") {
@@ -34,9 +31,9 @@ class TwitterOAuthServlet extends ScalatraServlet with TwirlSupport {
   get("/callback") {
     val accessTokenOption =
       for {
-      requestToken <- session.get("requestToken")
-      verifier <- params.get("oauth_verifier")
-    } yield service.getAccessToken(requestToken.asInstanceOf[Token], new Verifier(verifier))  
+        requestToken <- session.get("requestToken")
+        verifier <- params.get("oauth_verifier")
+      } yield service.getAccessToken(requestToken.asInstanceOf[Token], new Verifier(verifier))
 
     accessTokenOption match {
       case Some(accessToken) => {
@@ -48,10 +45,8 @@ class TwitterOAuthServlet extends ScalatraServlet with TwirlSupport {
         val response = request.send();
         response.isSuccessful match {
           case true => {
-            val j = json.parse(response.getBody)
-            System.out.println(json.pretty(json.render(j)));
-            val user = TwitterUser.extract(j)
-            val userid = User.getOrCreate(user.id_str , user.screen_name, accessToken, user.name)
+            val user = TwitterUser.parse(response.getBody)
+            val userid = User.getOrCreate(user, accessToken)
             session("current_user") = userid
           }
           case _ => halt(500, "Failed to get a valid response from twitter")
@@ -62,9 +57,15 @@ class TwitterOAuthServlet extends ScalatraServlet with TwirlSupport {
 
     redirect("/")
   }
-  
+
   get("/fake") {
-    val userid = User.getOrCreate("1", "testuser", new Token("key", "secre"), "Test User 1")
+    val cl = Thread.currentThread().getContextClassLoader
+
+    val rawJson = Source.fromInputStream(cl.getResourceAsStream("verify_credentials.json")).mkString
+    val accessToken = new Token("key", "secret")
+    val user = TwitterUser.parse(rawJson)
+    val userid = User.getOrCreate(user, accessToken)
     session("current_user") = userid
+    redirect("/")
   }
 }
