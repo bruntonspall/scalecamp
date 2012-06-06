@@ -2,15 +2,19 @@ package uk.co.bruntonspall.scalecamp.servlets
 
 import org.scalatra.ScalatraServlet
 import uk.co.bruntonspall.scalecamp.scalatra.TwirlSupport
-import uk.co.bruntonspall.scalecamp.utils.Config
+import com.googlecode.objectify.ObjectifyService
+import uk.co.bruntonspall.scalecamp.utils._
+import uk.co.bruntonspall.scalecamp.model._
+import com.google.appengine.api.datastore.Email
 
 class DispatcherServlet extends ScalatraServlet with TwirlSupport {
+  ObjectifyService.register(classOf[ConfigValue])
+  ObjectifyService.register(classOf[AdminAccount])
+  ObjectifyService.register(classOf[Registration])
 
   get("/") {
     if (Config.get("is.setup") != "1")
       redirect("/setup")
-    Config.put("key", "value")
-    println(Config.get("key"))
     html.welcome.render()
   }
 
@@ -20,6 +24,7 @@ class DispatcherServlet extends ScalatraServlet with TwirlSupport {
       case _ => html.setup.render(Config.configs)
     }
   }
+
   post("/setup") {
     Config.get("is.setup") match {
       case "1" => redirect("/")
@@ -29,5 +34,20 @@ class DispatcherServlet extends ScalatraServlet with TwirlSupport {
         redirect("/")
       }
     }
+  }
+
+  get("/register") {
+    html.register.render()
+  }
+  post("/register") {
+    log("Got call with " + params)
+    val registration = Registration.getOrCreate(
+      new Email(params.getOrElse("email", "")),
+      params.get("name").get,
+      params.get("company"),
+      params.get("twitter"),
+      params.get("reason").get
+
+    )
   }
 }

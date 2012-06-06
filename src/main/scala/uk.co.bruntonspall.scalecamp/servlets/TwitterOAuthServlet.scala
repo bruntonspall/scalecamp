@@ -6,7 +6,7 @@ import org.scribe.builder.ServiceBuilder
 import org.scribe.builder.api.TwitterApi
 import uk.co.bruntonspall.scalecamp.utils.Config
 import org.scribe.model._
-import uk.co.bruntonspall.scalecamp.model.{ TwitterUser, User }
+import uk.co.bruntonspall.scalecamp.model.{ TwitterUser, AdminAccount }
 import io.Source
 
 class TwitterOAuthServlet extends ScalatraServlet with TwirlSupport {
@@ -46,7 +46,7 @@ class TwitterOAuthServlet extends ScalatraServlet with TwirlSupport {
         response.isSuccessful match {
           case true => {
             val user = TwitterUser.parse(response.getBody)
-            val userid = User.getOrCreate(user, accessToken)
+            val userid = AdminAccount.getOrCreate(user, accessToken)
             session("current_user") = userid
           }
           case _ => halt(500, "Failed to get a valid response from twitter")
@@ -64,7 +64,7 @@ class TwitterOAuthServlet extends ScalatraServlet with TwirlSupport {
     val rawJson = Source.fromInputStream(cl.getResourceAsStream("verify_credentials.json")).mkString
     val accessToken = new Token("key", "secret")
     val user = TwitterUser.parse(rawJson)
-    val userid = User.getOrCreate(user, accessToken)
+    val userid = AdminAccount.getOrCreate(user, accessToken)
     session("current_user") = userid
     redirect("/")
   }

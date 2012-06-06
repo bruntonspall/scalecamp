@@ -13,7 +13,6 @@ case class ConfigValue(
 }
 
 object Config {
-  ObjectifyService.register(classOf[ConfigValue])
 
   val fallback = ConfigFactory.load()
 
